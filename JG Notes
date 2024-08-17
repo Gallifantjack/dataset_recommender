@@ -1,0 +1,34 @@
+## Note on `environment_full.yml`
+
+This file represents a clean environment created by following the standard installation instructions, plus additional packages that were found necessary during testing. It was generated on an Ubuntu system.
+
+If you encounter errors during installation or runtime:
+
+1. Compare your environment with `environment_full.yml` to identify any discrepancies.
+2. You can attempt to recreate this exact environment using:
+   ```
+   conda env create -f environment_full.yml
+   ```
+
+This may help resolve dependency issues.
+
+Remember that while this environment is known to work, it may include system-specific packages. If you're on a different operating system, you might need to make adjustments.
+
+## Note on Data
+
+The data is stored in a GCS bucket. To mount the bucket, you need to run the following script:
+
+```
+bash data/setup.sh
+```
+
+You will need to login to Google Cloud Services to mount the bucket.
+This will mount the bucket to the `data` directory.
+
+Then when you are finished, you can unmount the bucket by running:
+
+```
+bash data/teardown.sh
+```
+
+This will unmount the bucket.

@@ -17,18 +17,18 @@ name: yaib_classification_benchmark
 parameters:
   data_dir:
     values:
-      - ../data/mortality24/miiv
-      - ../data/mortality24/hirid
-      - ../data/mortality24/eicu
-      - ../data/mortality24/aumc
-      - ../data/aki/miiv
-      - ../data/aki/hirid
-      - ../data/aki/eicu
-      - ../data/aki/aumc
-      - ../data/sepsis/miiv
-      - ../data/sepsis/hirid
-      - ../data/sepsis/eicu
-      - ../data/sepsis/aumc
+      - data/Mortality/mimic
+      - data/Mortality/hirid
+      - data/Mortality/eicu
+      # - data/Mortality/aumc
+      - data/AKI/mimic
+      - data/AKI/hirid
+      - data/AKI/eicu
+      # - data/AKI/aumc
+      - data/Sepsis/mimic
+      - data/Sepsis/hirid
+      - data/Sepsis/eicu
+      # - data/Sepsis/aumc
   model:
     values:
       - LogisticRegression
