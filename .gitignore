@@ -129,4 +129,6 @@ yaib_logs/
 *.ckpt
 *.csv
 !demo_data/*/*/attrition.csv
-data/*
+
+# folders in data - files are fine
+/data/*/
