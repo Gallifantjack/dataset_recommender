@@ -68,4 +68,4 @@ dependencies:
       - torch==2.4.0  # ARM version of PyTorch should install automatically on M1
       - torchmetrics==1.4.0  # Try a version compatible with Python 3.10
       - wandb==0.17.7
-prefix: /Users/pedro/miniconda3/envs/yaib
+prefix: /opt/anaconda3/envs/yaib

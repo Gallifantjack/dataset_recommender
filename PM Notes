@@ -1,0 +1,14 @@
+## Note on demographic segmentation
+
+On the `BinaryClassification.gin` we have an example of how to use this segmentation.
+If you don't intend to use the filtering you can just put None in the respective field.
+The number of samples used will be shown during training as logging info.
+
+```
+preprocess.filter_criteria = {
+    'age': (30, 60),
+    'sex': 'male',
+    'region': None
+}
+```
+

@@ -21,6 +21,11 @@ DLPredictionWrapper.loss = @cross_entropy
 preprocess.preprocessor = @base_classification_preprocessor
 preprocess.vars = %vars
 preprocess.use_static = True
+preprocess.filter_criteria = {
+    'age': (30, 60),
+    'sex': 'male',
+    'region': None
+}
 
 # SELECTING DATASET
 PredictionDataset.vars = %vars

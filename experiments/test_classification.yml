@@ -32,11 +32,11 @@ parameters:
   model:
     values:
       - LogisticRegression
-      - LGBMClassifier
-      - GRU
-      - LSTM
-      - TCN
-      - Transformer
+      # - LGBMClassifier
+      # - GRU
+      # - LSTM
+      # - TCN
+      # - Transformer
   seed:
     values:
       - 1111

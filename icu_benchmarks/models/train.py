@@ -91,7 +91,7 @@ def train_common(
 
     if not eval_only:
         logging.info(
-            f"Training on {train_dataset.name} with {len(train_dataset)} samples and validating on {val_dataset.name} with"
+            f"Training on {train_dataset.name} with {len(data)}/{len(train_dataset)} samples and validating on {val_dataset.name} with"
             f" {len(val_dataset)} samples."
         )
     logging.info(f"Using {num_workers} workers for data loading.")

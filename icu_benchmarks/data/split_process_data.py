@@ -14,6 +14,50 @@ from icu_benchmarks.data.preprocessor import Preprocessor, DefaultClassification
 from icu_benchmarks.contants import RunMode
 from .constants import DataSplit as Split, DataSegment as Segment, VarType as Var
 
+##########################
+# The follow section allows for specific stay_ids to be selected based on gender, age and location through a dict in the gin file under the name "filter_criteria"
+def apply_filters(data, filter_criteria, vars):
+    if filter_criteria is None:
+        return data
+
+    id_column = vars[Var.group]
+    filtered_stay_ids = set(data[Segment.outcome][id_column])
+
+    if 'age' in filter_criteria:
+        min_age, max_age = filter_criteria['age']
+        age_filtered_ids = set(filter_by_age(data[Segment.static], min_age, max_age))
+        filtered_stay_ids &= age_filtered_ids
+
+    if 'sex' in filter_criteria:
+        gender = filter_criteria['sex']
+        gender_filtered_ids = set(filter_by_gender(data[Segment.static], gender))
+        filtered_stay_ids &= gender_filtered_ids
+
+    if 'region' in filter_criteria:
+        region = filter_criteria['region']
+        region_filtered_ids = set(filter_by_region(region, data[Segment.static], data[Segment.hospital]))
+        filtered_stay_ids &= region_filtered_ids
+
+    # Apply the filtered stay_ids to all segments
+    for segment in data:
+        data[segment] = data[segment][data[segment][id_column].isin(filtered_stay_ids)]
+
+    return data
+
+def filter_by_age(demographic_data, min_age, max_age):
+    filtered_data = demographic_data[(demographic_data["age"] < max_age) & (demographic_data["age"] > min_age)]
+    return filtered_data[vars[Var.group]].tolist()
+
+def filter_by_gender(demographic_data, gender):
+    filtered_data = demographic_data[demographic_data["sex"] == gender]
+    return filtered_data[vars[Var.group]].tolist()
+
+def filter_by_region(region, patients_df, hospital_df):
+    merged_df = pd.merge(patients_df, hospital_df, on='hospitalid', how='inner')
+    region_filtered_df = merged_df[merged_df['region'] == region]
+    return region_filtered_df[vars[Var.group]].tolist()
+
+#####################
 
 @gin.configurable("preprocess")
 def preprocess_data(
@@ -34,6 +78,7 @@ def preprocess_data(
     pretrained_imputation_model: str = None,
     complete_train: bool = False,
     runmode: RunMode = RunMode.classification,
+    filter_criteria: dict = None, #new 
 ) -> dict[dict[pd.DataFrame]]:
     """Perform loading, splitting, imputing and normalising of task data.
 
@@ -55,7 +100,9 @@ def preprocess_data(
         generate_cache: Generate cached preprocessed data if true.
         fold_index: Index of the fold to return.
         pretrained_imputation_model: pretrained imputation model to use. if None, standard imputation is used.
-
+        filter_criteria: A dictionary specifying filtering criteria. Can include 'age' (tuple of min and max age),
+                     'sex' (string), and 'region' (string).
+                     
     Returns:
         Preprocessed data as DataFrame in a hierarchical dict with features type (STATIC) / DYNAMIC/ OUTCOME
             nested within split (train/val/test).
@@ -92,6 +139,11 @@ def preprocess_data(
     # Read parquet files into pandas dataframes and remove the parquet file from memory
     logging.info(f"Loading data from directory {data_dir.absolute()}")
     data = {f: pq.read_table(data_dir / file_names[f]).to_pandas(self_destruct=True) for f in file_names.keys()}
+    
+    # Apply filters if specified
+    if filter_criteria:
+        data = apply_filters(data, filter_criteria, vars)
+
     # Generate the splits
     logging.info("Generating splits.")
     if not complete_train:
