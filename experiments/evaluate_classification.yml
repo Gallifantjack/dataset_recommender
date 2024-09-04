@@ -1,9 +1,9 @@
 command:
   - ${env}
   - ${program}
-  - train
+  - evaluate
   - -d
-  - ../data/
+  - ../../../data/mortality24/mimic 
   - -t
   - BinaryClassification
   - --log-dir

@@ -23,7 +23,7 @@ preprocess.vars = %vars
 preprocess.use_static = True
 preprocess.filter_criteria = {
     'age': (30, 60),
-    'sex': 'male',
+    'sex': 'Male',
     'region': None
 }
 

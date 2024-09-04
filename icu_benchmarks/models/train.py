@@ -89,9 +89,15 @@ def train_common(
     train_dataset, val_dataset = assure_minimum_length(train_dataset), assure_minimum_length(val_dataset)
     batch_size = min(batch_size, len(train_dataset), len(val_dataset))
 
+    print(f"Training dataset size: {len(train_dataset)}")
+    print(f"Validation dataset size: {len(val_dataset)}")
+
+
+    
     if not eval_only:
         logging.info(
-            f"Training on {train_dataset.name} with {len(data)}/{len(train_dataset)} samples and validating on {val_dataset.name} with"
+            f"{data}"
+            f"Training on {train_dataset.name} with {len(train_dataset)} samples and validating on {val_dataset.name} with"
             f" {len(val_dataset)} samples."
         )
     logging.info(f"Using {num_workers} workers for data loading.")

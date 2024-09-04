@@ -17,45 +17,66 @@ from .constants import DataSplit as Split, DataSegment as Segment, VarType as Va
 ##########################
 # The follow section allows for specific stay_ids to be selected based on gender, age and location through a dict in the gin file under the name "filter_criteria"
 def apply_filters(data, filter_criteria, vars):
+    logging.info(f"Applying filters: {filter_criteria}")
     if filter_criteria is None:
+        logging.info("No filter criteria provided, returning original data")
         return data
 
     id_column = vars[Var.group]
+    logging.debug(f"Using ID column: {id_column}")
+
     filtered_stay_ids = set(data[Segment.outcome][id_column])
+    logging.info(f"Initial number of stay IDs: {len(filtered_stay_ids)}")
 
     if 'age' in filter_criteria:
         min_age, max_age = filter_criteria['age']
-        age_filtered_ids = set(filter_by_age(data[Segment.static], min_age, max_age))
+        logging.debug(f"Filtering by age: min={min_age}, max={max_age}")
+        age_filtered_ids = set(filter_by_age(data[Segment.static], min_age, max_age, id_column))
         filtered_stay_ids &= age_filtered_ids
+        logging.info(f"After age filter, number of stay IDs: {len(filtered_stay_ids)}")
 
     if 'sex' in filter_criteria:
         gender = filter_criteria['sex']
-        gender_filtered_ids = set(filter_by_gender(data[Segment.static], gender))
+        logging.debug(f"Filtering by gender: {gender}")
+        gender_filtered_ids = set(filter_by_gender(data[Segment.static], gender, id_column))
         filtered_stay_ids &= gender_filtered_ids
+        logging.info(f"After gender filter, number of stay IDs: {len(filtered_stay_ids)}")
 
     if 'region' in filter_criteria:
         region = filter_criteria['region']
-        region_filtered_ids = set(filter_by_region(region, data[Segment.static], data[Segment.hospital]))
+        logging.debug(f"Filtering by region: {region}")
+        region_filtered_ids = set(filter_by_region(region, data[Segment.static], data[Segment.hospital], id_column))
         filtered_stay_ids &= region_filtered_ids
+        logging.info(f"After region filter, number of stay IDs: {len(filtered_stay_ids)}")
 
     # Apply the filtered stay_ids to all segments
     for segment in data:
+        original_count = len(data[segment])
         data[segment] = data[segment][data[segment][id_column].isin(filtered_stay_ids)]
+        filtered_count = len(data[segment])
+        logging.info(f"Filtered {segment}: {original_count} -> {filtered_count} rows")
 
     return data
 
-def filter_by_age(demographic_data, min_age, max_age):
-    filtered_data = demographic_data[(demographic_data["age"] < max_age) & (demographic_data["age"] > min_age)]
-    return filtered_data[vars[Var.group]].tolist()
+def filter_by_age(demographic_data, min_age, max_age, id_column):
+    logging.info(f"Age filter input shape: {demographic_data.shape}")
+    filtered_data = demographic_data[(demographic_data["age"] >= min_age) & (demographic_data["age"] <= max_age)]
+    logging.info(f"Age filter output shape: {filtered_data.shape}")
+    return filtered_data[id_column].tolist()
 
-def filter_by_gender(demographic_data, gender):
+def filter_by_gender(demographic_data, gender, id_column):
+    logging.info(f"Gender filter input shape: {demographic_data.shape} and {gender}")
     filtered_data = demographic_data[demographic_data["sex"] == gender]
-    return filtered_data[vars[Var.group]].tolist()
+    logging.info(f"Gender filter output shape: {filtered_data.shape}")
+    return filtered_data[id_column].tolist()
 
-def filter_by_region(region, patients_df, hospital_df):
+def filter_by_region(region, patients_df, hospital_df, id_column):
+    logging.info(f"Region filter input shapes: patients={patients_df.shape}, hospitals={hospital_df.shape}")
     merged_df = pd.merge(patients_df, hospital_df, on='hospitalid', how='inner')
+    logging.info(f"Merged dataframe shape: {merged_df.shape}")
     region_filtered_df = merged_df[merged_df['region'] == region]
-    return region_filtered_df[vars[Var.group]].tolist()
+    logging.info(f"Region filter output shape: {region_filtered_df.shape}")
+    return region_filtered_df[id_column].tolist()
 
 #####################
 
@@ -108,6 +129,9 @@ def preprocess_data(
             nested within split (train/val/test).
     """
 
+    logging.info(f"\t -------------- Complete Gin configuration --------------")
+    logging.info(gin.config_str())
+
     cache_dir = data_dir / "cache"
 
     if not use_static:
@@ -135,14 +159,17 @@ def preprocess_data(
                 return pickle.load(f)
         else:
             logging.info(f"No cached data found in {cache_file}, loading raw features.")
-
+    
     # Read parquet files into pandas dataframes and remove the parquet file from memory
     logging.info(f"Loading data from directory {data_dir.absolute()}")
     data = {f: pq.read_table(data_dir / file_names[f]).to_pandas(self_destruct=True) for f in file_names.keys()}
     
     # Apply filters if specified
     if filter_criteria:
+        logging.info(f"\t --------- Demographic segmentation ---------")
+        logging.info(f"{filter_criteria}.")
         data = apply_filters(data, filter_criteria, vars)
+        
 
     # Generate the splits
     logging.info("Generating splits.")
@@ -172,8 +199,17 @@ def preprocess_data(
     else:
         logging.info("Cache will not be saved.")
 
+   
+    # Log the size of the data
+    if isinstance(data, dict):
+        for key, value in data.items():
+            logging.info(f"Size of {key} data: {len(value)}")
+    elif hasattr(data, '__len__'):
+        logging.info(f"Size of data: {len(data)}")
+    else:
+        logging.info("Unable to determine the size of data.")
+    
     logging.info("Finished preprocessing.")
-
     return data
 
 
